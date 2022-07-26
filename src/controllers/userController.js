@@ -3,28 +3,17 @@ const jwt = require("jsonwebtoken");
 const { uploadFile } = require("../awsS3/aws");
 const chekEmail = require("email-validator");
 const bcrypt = require("bcrypt");
+const validations= require("../validations/validation")
 
-const isValid = function (value) {
-  if (!value || typeof value != "string" || value.trim().length == 0)
-    return false;
-  return true;
-};
-const isValidRequestBody = function (requestBody) {
-  return Object.keys(requestBody).length > 0;
-};
-
-const isValidFiles = (files) => {
-  if (files && files.length > 0) return true;
-};
 
 const createUser = async function (req, res) {
   try {
     let getUsersData = req.body;
     let files = req.files;
-    if (!isValidFiles(files))
+    if (!validations.isValidFiles(files))
       return res.status(400).send({ status: false, msg: "invalid file" });
 
-    if (!isValidRequestBody(getUsersData))
+    if (!validations.isValidRequestBody(getUsersData))
       return res.status(404).send({
         status: false,
         message: "Please Enter Data To Create User",
@@ -51,7 +40,7 @@ const createUser = async function (req, res) {
       let regx = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
       return regx.test(val);
     };
-    if (!isValid(fname))
+    if (!validations.isValid(fname))
       return res.status(400).send({
         status: false,
         message: "First Name is Missing",
@@ -62,7 +51,7 @@ const createUser = async function (req, res) {
         message: "Plaese Enter Valid Name with Only alphabet",
       });
 
-    if (!isValid(lname))
+    if (!validations.isValid(lname))
       return res.status(400).send({
         status: false,
         message: "Last Name is Missing",
@@ -83,7 +72,7 @@ const createUser = async function (req, res) {
       });
     }
 
-    if (!isValid(phone))
+    if (!validations.isValid(phone))
       return res.status(400).send({
         status: false,
         message: "Phone number is missing ",
@@ -101,7 +90,7 @@ const createUser = async function (req, res) {
         .send({ status: false, message: "email already in use" });
     }
 
-    if (!isValid(email))
+    if (!validations.isValid(email))
       return res.status(400).send({
         status: false,
         message: "Email is Missing ",
@@ -114,7 +103,7 @@ const createUser = async function (req, res) {
 
     const checkPassword = /^[a-zA-Z0-9!@#$%^&*]{8,15}$/;
 
-    if (!isValid(password))
+    if (!validations.isValid(password))
       return res.status(400).send({
         status: false,
         message:
@@ -126,9 +115,11 @@ const createUser = async function (req, res) {
         message:
           "Password is missing or Please Enter Valid Password Minumum 8 Character and Maximum 15 ",
       });
+      //hash Password
     const saltRounds = 10;
     const hash = await bcrypt.hash(password, saltRounds);
     getUsersData.password = hash;
+
     if (address) {
       let key = Object.keys(address);
 
@@ -204,12 +195,12 @@ const userLogin = async (req, res) => {
   try {
     let data = req.body;
     let { email, password } = data;
-    if (!isValidRequestBody(data)) {
+    if (!validations.isValidRequestBody(data)) {
       return res
         .status(400)
         .send({ status: false, msg: "Please enter email and Password" });
     }
-    if (!isValid(email))
+    if (!validations.isValid(email))
       return res.status(400).send({ status: false, msg: "Please enter email" });
 
     const emailValidator = /^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/;
@@ -223,7 +214,7 @@ const userLogin = async (req, res) => {
         });
     }
 
-    if (!isValid(password))
+    if (!validations.isValid(password))
       return res
         .status(400)
         .send({ status: false, msg: "Please enter Password" });
@@ -256,10 +247,10 @@ const userLogin = async (req, res) => {
 const getUser = async (req, res) => {
   try {
     let userId = req.params.userId;
-    // if (!isValidObjectId(userId))
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, msg: `Oops! ${userId} This Not Valid UserId ` });
+    if (!validations.isValidObjectId(userId))
+      return res
+        .status(400)
+        .send({ status: false, msg: `Oops! ${userId} This Not Valid UserId ` });
     let userDetail = await userModel.findById(userId);
     if (!userDetail) {
       return res
